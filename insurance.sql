@@ -115,8 +115,8 @@ d.d_no=dl.d_no;
 select * from emp_details;
 
 -- Create a trigger that prevents a project from being deleted if it is currently being worked by
-any employee.
-DELIMITER //
+-- any employee.
+-- DELIMITER //
 create trigger PreventDelete
 before delete on Project
 for each row
