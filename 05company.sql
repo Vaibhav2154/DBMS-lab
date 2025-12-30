@@ -85,12 +85,18 @@ JOIN Employee e ON p.d_no = e.d_no
 WHERE e.name LIKE "%Krishna%";
 
 -- Salary hike for employees working on IoT project
+-- SELECT w.ssn, e.name, e.salary AS old_salary, e.salary * 1.1 AS new_salary
+-- FROM WorksOn w
+-- JOIN Employee e ON w.ssn = e.ssn
+-- WHERE w.p_no = (
+--     SELECT p_no FROM Project WHERE p_name = "IOT"
+-- );
+-- Simplified by joining to Project by name
 SELECT w.ssn, e.name, e.salary AS old_salary, e.salary * 1.1 AS new_salary
-FROM WorksOn w
-JOIN Employee e ON w.ssn = e.ssn
-WHERE w.p_no = (
-    SELECT p_no FROM Project WHERE p_name = "IOT"
-);
+FROM WorksOn AS w
+JOIN Employee AS e ON w.ssn = e.ssn
+JOIN Project AS p ON p.p_no = w.p_no
+WHERE p.p_name = 'IOT';
 
 -- Salary statistics for Accounts department
 SELECT
@@ -103,17 +109,26 @@ JOIN Department d ON e.d_no = d.d_no
 WHERE d.dname = "Accounts";
 
 -- Employees who work on all projects of department 1
+-- SELECT e.ssn, e.name, e.d_no
+-- FROM Employee e
+-- WHERE NOT EXISTS (
+--     SELECT p.p_no
+--     FROM Project p
+--     WHERE p.d_no = 1
+--       AND p.p_no NOT IN (
+--           SELECT w.p_no
+--           FROM WorksOn w
+--           WHERE w.ssn = e.ssn
+--       )
+-- );
+-- Simplified using GROUP BY/HAVING to perform division
 SELECT e.ssn, e.name, e.d_no
-FROM Employee e
-WHERE NOT EXISTS (
-    SELECT p.p_no
-    FROM Project p
-    WHERE p.d_no = 1
-      AND p.p_no NOT IN (
-          SELECT w.p_no
-          FROM WorksOn w
-          WHERE w.ssn = e.ssn
-      )
+FROM Employee AS e
+JOIN WorksOn AS w ON w.ssn = e.ssn
+JOIN Project AS p ON p.p_no = w.p_no AND p.d_no = 1
+GROUP BY e.ssn, e.name, e.d_no
+HAVING COUNT(DISTINCT p.p_no) = (
+    SELECT COUNT(*) FROM Project p2 WHERE p2.d_no = 1
 );
 
 -- Departments with more than one employee earning above 6,00,000
@@ -125,11 +140,16 @@ GROUP BY d.d_no
 HAVING COUNT(*) > 1;
 
 -- View for employee details
-CREATE VIEW emp_details AS
+-- CREATE VIEW emp_details AS
+-- SELECT e.name, d.dname, dl.d_loc
+-- FROM Employee e
+-- JOIN Department d ON e.d_no = d.d_no
+-- JOIN DLocation dl ON d.d_no = dl.d_no;
+CREATE OR REPLACE VIEW emp_details AS
 SELECT e.name, d.dname, dl.d_loc
-FROM Employee e
-JOIN Department d ON e.d_no = d.d_no
-JOIN DLocation dl ON d.d_no = dl.d_no;
+FROM Employee AS e
+JOIN Department AS d ON e.d_no = d.d_no
+JOIN DLocation AS dl ON d.d_no = dl.d_no;
 
 -- Trigger to prevent deletion of projects with assigned employees
 DELIMITER //
