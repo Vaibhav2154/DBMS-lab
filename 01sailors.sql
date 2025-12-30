@@ -46,52 +46,92 @@ INSERT INTO reserves VALUES
 (1, 104, "2023-12-12");
 
 -- Find the colours of the boats reserved by Albert
-SELECT b.color
-FROM Sailors s, Boat b, reserves r
-WHERE s.sid = r.sid
-  AND b.bid = r.bid
-  AND s.sname = "Albert";
+-- SELECT b.color
+-- FROM Sailors s, Boat b, reserves r
+-- WHERE s.sid = r.sid
+--   AND b.bid = r.bid
+--   AND s.sname = "Albert";
+SELECT DISTINCT b.color
+FROM Sailors s
+JOIN reserves r ON s.sid = r.sid
+JOIN Boat b ON r.bid = b.bid
+WHERE s.sname = 'Albert';
+
 
 -- Find all the sailor sids who have rating at least 8 or reserved boat 103
-(SELECT sid
- FROM Sailors
- WHERE rating >= 8)
-UNION
-(SELECT sid
- FROM reserves
- WHERE bid = 103);
+-- (SELECT sid
+--  FROM Sailors
+--  WHERE rating >= 8)
+-- UNION
+-- (SELECT sid
+--  FROM reserves
+--  WHERE bid = 103);
+SELECT DISTINCT s.sid
+FROM Sailors s
+LEFT JOIN reserves r ON s.sid = r.sid
+WHERE s.rating >= 8
+   OR r.bid = 103;
+
 
 -- Find the names of the sailors who have not reserved a boat whose name contains "storm"
 -- Order the name in ascending order
+-- SELECT s.sname
+-- FROM Sailors s
+-- WHERE s.sid NOT IN (
+--     SELECT s1.sid
+--     FROM Sailors s1, reserves r1
+--     WHERE r1.sid = s1.sid
+--       AND s1.sname LIKE "%storm%"
+-- )
+-- AND s.sname LIKE "%storm%"
+-- ORDER BY s.sname ASC;
 SELECT s.sname
 FROM Sailors s
-WHERE s.sid NOT IN (
-    SELECT s1.sid
-    FROM Sailors s1, reserves r1
-    WHERE r1.sid = s1.sid
-      AND s1.sname LIKE "%storm%"
-)
-AND s.sname LIKE "%storm%"
+WHERE s.sname LIKE '%storm%'
+  AND NOT EXISTS (
+      SELECT 1
+      FROM reserves r
+      WHERE r.sid = s.sid
+  )
 ORDER BY s.sname ASC;
 
+
 -- Find the name of the sailors who have reserved all boats
+-- SELECT s.sname
+-- FROM Sailors s
+-- WHERE NOT EXISTS (
+--     SELECT *
+--     FROM Boat b
+--     WHERE NOT EXISTS (
+--         SELECT *
+--         FROM reserves r
+--         WHERE r.sid = s.sid
+--           AND r.bid = b.bid
+--     )
+-- );
 SELECT s.sname
 FROM Sailors s
 WHERE NOT EXISTS (
-    SELECT *
+    SELECT 1
     FROM Boat b
     WHERE NOT EXISTS (
-        SELECT *
+        SELECT 1
         FROM reserves r
         WHERE r.sid = s.sid
           AND r.bid = b.bid
     )
 );
 
+
 -- Find the name and age of the oldest sailor
+-- SELECT sname, age
+-- FROM Sailors
+-- WHERE age = (SELECT MAX(age) FROM Sailors);
 SELECT sname, age
 FROM Sailors
-WHERE age = (SELECT MAX(age) FROM Sailors);
+ORDER BY age DESC
+LIMIT 1;
+
 
 -- For each boat reserved by at least 2 sailors with age >= 40,
 -- find the bid and average age of such sailors
@@ -102,28 +142,60 @@ WHERE r.sid = s.sid
   AND s.age >= 40
 GROUP BY b.bid
 HAVING COUNT(DISTINCT r.sid) >= 2;
+-- SELECT r.bid, AVG(s.age) AS average_age
+-- FROM reserves r
+-- JOIN Sailors s ON r.sid = s.sid
+-- WHERE s.age >= 40
+-- GROUP BY r.bid
+-- HAVING COUNT(DISTINCT r.sid) >= 2;
 
 -- Create a view showing names and colours of boats reserved by sailors with rating = 5
-CREATE VIEW ReservedBoatsWithRatedSailor AS
+-- CREATE VIEW ReservedBoatsWithRatedSailor AS
+-- SELECT DISTINCT b.bname, b.color
+-- FROM Sailors s, Boat b, reserves r
+-- WHERE s.sid = r.sid
+--   AND b.bid = r.bid
+--   AND s.rating = 5;'
+
+CREATE OR REPLACE VIEW ReservedBoatsWithRatedSailor AS
 SELECT DISTINCT b.bname, b.color
-FROM Sailors s, Boat b, reserves r
-WHERE s.sid = r.sid
-  AND b.bid = r.bid
-  AND s.rating = 5;
+FROM Sailors s
+JOIN reserves r ON s.sid = r.sid
+JOIN Boat b ON r.bid = b.bid
+WHERE s.rating = 5;
+
 
 -- Trigger to prevent deletion of boats with active reservations
+-- DELIMITER //
+-- CREATE OR REPLACE TRIGGER CheckAndDelete
+-- BEFORE DELETE ON Boat
+-- FOR EACH ROW
+-- BEGIN
+--     IF EXISTS (SELECT * FROM reserves WHERE bid = OLD.bid) THEN
+--         SIGNAL SQLSTATE '45000'
+--         SET MESSAGE_TEXT = 'Boat is reserved and hence cannot be deleted';
+--     END IF;
+-- END;
+-- //
+-- DELIMITER ;
+
 DELIMITER //
+
 CREATE OR REPLACE TRIGGER CheckAndDelete
 BEFORE DELETE ON Boat
 FOR EACH ROW
 BEGIN
-    IF EXISTS (SELECT * FROM reserves WHERE bid = OLD.bid) THEN
+    IF EXISTS (
+        SELECT 1 FROM reserves WHERE bid = OLD.bid
+    ) THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Boat is reserved and hence cannot be deleted';
+        SET MESSAGE_TEXT = 'Boat is reserved and cannot be deleted';
     END IF;
 END;
 //
+
 DELIMITER ;
+
 
 -- Example delete (will fail if boat is reserved)
 DELETE FROM Boat WHERE bid = 103;
