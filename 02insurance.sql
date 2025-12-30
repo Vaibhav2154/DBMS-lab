@@ -77,21 +77,32 @@ INSERT INTO participated VALUES
 ("D222", "KA-09-MA-1234", 65738, 25000);
 
 -- Total number of people who owned a car involved in accidents in 2021
-SELECT COUNT(DISTINCT p.driver_id)
-FROM participated p
-JOIN accident a ON p.report_no = a.report_no
-WHERE a.accident_date LIKE '2021%';
+-- SELECT COUNT(DISTINCT p.driver_id)
+-- FROM participated p
+-- JOIN accident a ON p.report_no = a.report_no
+-- WHERE a.accident_date LIKE '2021%';
+-- Simplified to use YEAR() instead of string LIKE on date
+SELECT COUNT(DISTINCT pt.driver_id)
+FROM participated AS pt
+JOIN accident AS a ON pt.report_no = a.report_no
+WHERE YEAR(a.accident_date) = 2021;
 
 -- Number of accidents involving cars belonging to Smith
+-- SELECT COUNT(DISTINCT a.report_no)
+-- FROM accident a
+-- WHERE EXISTS (
+--     SELECT 1
+--     FROM person p
+--     JOIN participated pt ON p.driver_id = pt.driver_id
+--     WHERE p.driver_name = "Smith"
+--       AND pt.report_no = a.report_no
+-- );
+-- Simplified by replacing EXISTS with direct joins
 SELECT COUNT(DISTINCT a.report_no)
-FROM accident a
-WHERE EXISTS (
-    SELECT 1
-    FROM person p
-    JOIN participated pt ON p.driver_id = pt.driver_id
-    WHERE p.driver_name = "Smith"
-      AND pt.report_no = a.report_no
-);
+FROM accident AS a
+JOIN participated AS pt ON pt.report_no = a.report_no
+JOIN person AS p ON p.driver_id = pt.driver_id
+WHERE p.driver_name = 'Smith';
 
 -- Add a new accident
 INSERT INTO accident VALUES
@@ -101,14 +112,21 @@ INSERT INTO participated VALUES
 ("D222", "KA-21-BD-4728", 45562, 50000);
 
 -- Delete the Mazda belonging to Smith
-DELETE FROM car
-WHERE model = "Mazda"
-AND reg_no IN (
-    SELECT o.reg_no
-    FROM person p
-    JOIN owns o ON p.driver_id = o.driver_id
-    WHERE p.driver_name = "Smith"
-);
+-- DELETE FROM car
+-- WHERE model = "Mazda"
+-- AND reg_no IN (
+--     SELECT o.reg_no
+--     FROM person p
+--     JOIN owns o ON p.driver_id = o.driver_id
+--     WHERE p.driver_name = "Smith"
+-- );
+-- Simplified using multi-table DELETE with joins
+DELETE c
+FROM car AS c
+JOIN owns AS o ON o.reg_no = c.reg_no
+JOIN person AS p ON p.driver_id = o.driver_id
+WHERE p.driver_name = 'Smith'
+    AND c.model = 'Mazda';
 
 -- Update damage amount
 UPDATE participated
@@ -117,10 +135,15 @@ WHERE report_no = 65738
   AND reg_no = "KA-09-MA-1234";
 
 -- View showing models and years of cars involved in accidents
-CREATE VIEW CarsInAccident AS
+-- CREATE VIEW CarsInAccident AS
+-- SELECT DISTINCT c.model, c.c_year
+-- FROM car c
+-- JOIN participated p ON c.reg_no = p.reg_no;
+-- Use OR REPLACE so script is idempotent
+CREATE OR REPLACE VIEW CarsInAccident AS
 SELECT DISTINCT c.model, c.c_year
-FROM car c
-JOIN participated p ON c.reg_no = p.reg_no;
+FROM car AS c
+JOIN participated AS pt ON c.reg_no = pt.reg_no;
 
 -- Trigger preventing a driver from participating in more than 2 accidents
 DELIMITER //
