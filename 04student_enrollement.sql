@@ -82,35 +82,55 @@ INSERT INTO BookAdoption VALUES
 (1, 5, 123456);
 
 -- Textbooks (Course#, ISBN, Title) for CS courses using more than two books
+-- SELECT c.course, t.bookIsbn, t.book_title
+-- FROM Course c
+-- JOIN BookAdoption ba ON c.course = ba.course
+-- JOIN TextBook t ON ba.bookIsbn = t.bookIsbn
+-- WHERE c.dept = 'CS'
+-- AND (
+--     SELECT COUNT(*)
+--     FROM BookAdoption b
+--     WHERE b.course = c.course
+-- ) > 2
+-- ORDER BY t.book_title;
+-- Simplified using GROUP BY/HAVING via derived course list
 SELECT c.course, t.bookIsbn, t.book_title
-FROM Course c
-JOIN BookAdoption ba ON c.course = ba.course
-JOIN TextBook t ON ba.bookIsbn = t.bookIsbn
+FROM Course AS c
+JOIN BookAdoption AS ba ON c.course = ba.course
+JOIN TextBook AS t ON ba.bookIsbn = t.bookIsbn
+JOIN (
+    SELECT b.course
+    FROM BookAdoption AS b
+    GROUP BY b.course
+    HAVING COUNT(*) > 2
+) AS many ON many.course = c.course
 WHERE c.dept = 'CS'
-AND (
-    SELECT COUNT(*)
-    FROM BookAdoption b
-    WHERE b.course = c.course
-) > 2
 ORDER BY t.book_title;
 
 -- Departments where all adopted books are from a specific publisher (PEARSON)
-SELECT DISTINCT c.dept
-FROM Course c
-WHERE c.dept IN (
-    SELECT c1.dept
-    FROM Course c1
-    JOIN BookAdoption b1 ON c1.course = b1.course
-    JOIN TextBook t1 ON t1.bookIsbn = b1.bookIsbn
-    WHERE t1.publisher = 'Pearson'
-)
-AND c.dept NOT IN (
-    SELECT c2.dept
-    FROM Course c2
-    JOIN BookAdoption b2 ON c2.course = b2.course
-    JOIN TextBook t2 ON t2.bookIsbn = b2.bookIsbn
-    WHERE t2.publisher <> 'Pearson'
-);
+-- SELECT DISTINCT c.dept
+-- FROM Course c
+-- WHERE c.dept IN (
+--     SELECT c1.dept
+--     FROM Course c1
+--     JOIN BookAdoption b1 ON c1.course = b1.course
+--     JOIN TextBook t1 ON t1.bookIsbn = b1.bookIsbn
+--     WHERE t1.publisher = 'Pearson'
+-- )
+-- AND c.dept NOT IN (
+--     SELECT c2.dept
+--     FROM Course c2
+--     JOIN BookAdoption b2 ON c2.course = b2.course
+--     JOIN TextBook t2 ON t2.bookIsbn = b2.bookIsbn
+--     WHERE t2.publisher <> 'Pearson'
+-- );
+-- Simplified with GROUP BY/HAVING: zero non-Pearson adoptions
+SELECT c.dept
+FROM Course AS c
+JOIN BookAdoption AS b ON c.course = b.course
+JOIN TextBook AS t ON t.bookIsbn = b.bookIsbn
+GROUP BY c.dept
+HAVING COUNT(*) > 0 AND SUM(t.publisher <> 'Pearson') = 0;
 
 -- Students with maximum marks in DBMS
 SELECT s.name
@@ -126,10 +146,15 @@ AND e.marks = (
 );
 
 -- View showing courses opted by a student along with marks
-CREATE VIEW CoursesOptedByStudent AS
+-- CREATE VIEW CoursesOptedByStudent AS
+-- SELECT c.cname, e.marks
+-- FROM Course c
+-- JOIN Enroll e ON c.course = e.course
+-- WHERE e.regno = '01HF235';
+CREATE OR REPLACE VIEW CoursesOptedByStudent AS
 SELECT c.cname, e.marks
-FROM Course c
-JOIN Enroll e ON c.course = e.course
+FROM Course AS c
+JOIN Enroll AS e ON c.course = e.course
 WHERE e.regno = '01HF235';
 
 -- Trigger to prevent enrollment if marks are below threshold
