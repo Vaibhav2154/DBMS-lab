@@ -90,17 +90,23 @@ FROM Shipments
 WHERE warehouse_id = 1;
 
 -- Warehouses supplying orders of customer "Kumar"
+-- SELECT s.order_id, s.warehouse_id
+-- FROM Shipments s
+-- WHERE s.order_id IN (
+--     SELECT o.order_id
+--     FROM Orders o
+--     WHERE o.cust_id = (
+--         SELECT c.cust_id
+--         FROM Customers c
+--         WHERE c.cname = "Kumar"
+--     )
+-- );
+-- Simplified via joins
 SELECT s.order_id, s.warehouse_id
-FROM Shipments s
-WHERE s.order_id IN (
-    SELECT o.order_id
-    FROM Orders o
-    WHERE o.cust_id = (
-        SELECT c.cust_id
-        FROM Customers c
-        WHERE c.cname = "Kumar"
-    )
-);
+FROM Shipments AS s
+JOIN Orders AS o ON o.order_id = s.order_id
+JOIN Customers AS c ON c.cust_id = o.cust_id
+WHERE c.cname = 'Kumar';
 
 -- Customer order statistics
 SELECT c.cname,
@@ -111,12 +117,17 @@ JOIN Orders o ON c.cust_id = o.cust_id
 GROUP BY c.cname;
 
 -- Delete all orders for customer "Kumar"
-DELETE FROM Orders
-WHERE cust_id = (
-    SELECT cust_id
-    FROM Customers
-    WHERE cname = "Kumar"
-);
+-- DELETE FROM Orders
+-- WHERE cust_id = (
+--     SELECT cust_id
+--     FROM Customers
+--     WHERE cname = "Kumar"
+-- );
+-- Simplified using join-delete
+DELETE o
+FROM Orders AS o
+JOIN Customers AS c ON c.cust_id = o.cust_id
+WHERE c.cname = 'Kumar';
 
 -- Item with maximum unit price
 SELECT MAX(unitprice)
@@ -145,7 +156,11 @@ INSERT INTO OrderItems VALUES
 (6, 1, 5);
 
 -- View for shipments from warehouse 5
-CREATE VIEW ShipmentDatesFromWarehouse5 AS
+-- CREATE VIEW ShipmentDatesFromWarehouse5 AS
+-- SELECT order_id, ship_date
+-- FROM Shipments
+-- WHERE warehouse_id = 5;
+CREATE OR REPLACE VIEW ShipmentDatesFromWarehouse5 AS
 SELECT order_id, ship_date
 FROM Shipments
 WHERE warehouse_id = 5;
