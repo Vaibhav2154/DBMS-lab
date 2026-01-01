@@ -54,7 +54,7 @@ INSERT INTO reserves VALUES
 SELECT DISTINCT b.color
 FROM Sailors s
 JOIN reserves r ON s.sid = r.sid
-JOIN Boat b ON r.bid = b.bid
+JOIN Boat b ON b.bid = r.bid
 WHERE s.sname = 'Albert';
 
 
@@ -68,7 +68,7 @@ WHERE s.sname = 'Albert';
 --  WHERE bid = 103);
 SELECT DISTINCT s.sid
 FROM Sailors s
-LEFT JOIN reserves r ON s.sid = r.sid
+JOIN reserves r ON s.sid = r.sid
 WHERE s.rating >= 8
    OR r.bid = 103;
 
@@ -85,15 +85,15 @@ WHERE s.rating >= 8
 -- )
 -- AND s.sname LIKE "%storm%"
 -- ORDER BY s.sname ASC;
-SELECT s.sname
-FROM Sailors s
-WHERE s.sname LIKE '%storm%'
-  AND NOT EXISTS (
-      SELECT 1
-      FROM reserves r
-      WHERE r.sid = s.sid
-  )
-ORDER BY s.sname ASC;
+-- SELECT s.sname
+-- FROM Sailors s
+-- WHERE s.sname LIKE '%storm%'
+--   AND NOT EXISTS (
+--       SELECT 1
+--       FROM reserves r
+--       WHERE r.sid = s.sid
+--   )
+-- ORDER BY s.sname ASC;
 
 
 -- Find the name of the sailors who have reserved all boats
@@ -135,13 +135,13 @@ LIMIT 1;
 
 -- For each boat reserved by at least 2 sailors with age >= 40,
 -- find the bid and average age of such sailors
-SELECT b.bid, AVG(s.age) AS average_age
-FROM Sailors s, Boat b, reserves r
-WHERE r.sid = s.sid
-  AND r.bid = b.bid
-  AND s.age >= 40
-GROUP BY b.bid
-HAVING COUNT(DISTINCT r.sid) >= 2;
+-- SELECT b.bid, AVG(s.age) AS average_age
+-- FROM Sailors s, Boat b, reserves r
+-- WHERE r.sid = s.sid
+--   AND r.bid = b.bid
+--   AND s.age >= 40
+-- GROUP BY b.bid
+-- HAVING COUNT(DISTINCT r.sid) >= 2;
 -- SELECT r.bid, AVG(s.age) AS average_age
 -- FROM reserves r
 -- JOIN Sailors s ON r.sid = s.sid
@@ -179,23 +179,23 @@ WHERE s.rating = 5;
 -- //
 -- DELIMITER ;
 
-DELIMITER //
+-- DELIMITER //
 
-CREATE OR REPLACE TRIGGER CheckAndDelete
-BEFORE DELETE ON Boat
-FOR EACH ROW
-BEGIN
-    IF EXISTS (
-        SELECT 1 FROM reserves WHERE bid = OLD.bid
-    ) THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Boat is reserved and cannot be deleted';
-    END IF;
-END;
-//
+-- CREATE OR REPLACE TRIGGER CheckAndDelete
+-- BEFORE DELETE ON Boat
+-- FOR EACH ROW
+-- BEGIN
+--     IF EXISTS (
+--         SELECT 1 FROM reserves WHERE bid = OLD.bid
+--     ) THEN
+--         SIGNAL SQLSTATE '45000'
+--         SET MESSAGE_TEXT = 'Boat is reserved and cannot be deleted';
+--     END IF;
+-- END;
+-- //
 
-DELIMITER ;
+-- DELIMITER ;
 
 
--- Example delete (will fail if boat is reserved)
-DELETE FROM Boat WHERE bid = 103;
+-- -- Example delete (will fail if boat is reserved)
+-- DELETE FROM Boat WHERE bid = 103;
