@@ -83,8 +83,8 @@ INSERT INTO participated VALUES
 -- WHERE a.accident_date LIKE '2021%';
 -- Simplified to use YEAR() instead of string LIKE on date
 SELECT COUNT(DISTINCT pt.driver_id)
-FROM participated AS pt
-JOIN accident AS a ON pt.report_no = a.report_no
+FROM participated pt
+JOIN accident a ON pt.report_no = a.report_no
 WHERE YEAR(a.accident_date) = 2021;
 
 -- Number of accidents involving cars belonging to Smith
@@ -98,10 +98,15 @@ WHERE YEAR(a.accident_date) = 2021;
 --       AND pt.report_no = a.report_no
 -- );
 -- Simplified by replacing EXISTS with direct joins
-SELECT COUNT(DISTINCT a.report_no)
-FROM accident AS a
-JOIN participated AS pt ON pt.report_no = a.report_no
-JOIN person AS p ON p.driver_id = pt.driver_id
+-- SELECT COUNT(DISTINCT a.report_no)
+-- FROM accident a
+-- JOIN participated pt ON pt.report_no = a.report_no
+-- JOIN person p ON p.driver_id = pt.driver_id
+-- WHERE p.driver_name = 'Smith';
+
+SELECT COUNT(DISTINCT pt.report_no)
+FROM participated pt
+JOIN person p ON p.driver_id = pt.driver_id
 WHERE p.driver_name = 'Smith';
 
 -- Add a new accident
