@@ -84,10 +84,10 @@ INSERT INTO Shipments VALUES
 (4, 3, "2019-05-16"),
 (5, 5, "2020-12-23");
 
--- Orders shipped from warehouse 0001
+-- Orders shipped from warehouse 0002
 SELECT order_id, ship_date
 FROM Shipments
-WHERE warehouse_id = 1;
+WHERE warehouse_id = 2;
 
 -- Warehouses supplying orders of customer "Kumar"
 -- SELECT s.order_id, s.warehouse_id
