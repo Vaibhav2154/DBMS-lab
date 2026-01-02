@@ -82,30 +82,30 @@ INSERT INTO BookAdoption VALUES
 (1, 5, 123456);
 
 -- Textbooks (Course#, ISBN, Title) for CS courses using more than two books
--- SELECT c.course, t.bookIsbn, t.book_title
--- FROM Course c
--- JOIN BookAdoption ba ON c.course = ba.course
--- JOIN TextBook t ON ba.bookIsbn = t.bookIsbn
--- WHERE c.dept = 'CS'
--- AND (
---     SELECT COUNT(*)
---     FROM BookAdoption b
---     WHERE b.course = c.course
--- ) > 2
--- ORDER BY t.book_title;
--- Simplified using GROUP BY/HAVING via derived course list
 SELECT c.course, t.bookIsbn, t.book_title
-FROM Course AS c
-JOIN BookAdoption AS ba ON c.course = ba.course
-JOIN TextBook AS t ON ba.bookIsbn = t.bookIsbn
-JOIN (
-    SELECT b.course
-    FROM BookAdoption AS b
-    GROUP BY b.course
-    HAVING COUNT(*) > 2
-) AS many ON many.course = c.course
+FROM Course c
+JOIN BookAdoption ba ON c.course = ba.course
+JOIN TextBook t ON ba.bookIsbn = t.bookIsbn
 WHERE c.dept = 'CS'
+AND (
+    SELECT COUNT(*)
+    FROM BookAdoption b
+    WHERE b.course = c.course
+) > 2
 ORDER BY t.book_title;
+-- Simplified using GROUP BY/HAVING via derived course list
+-- SELECT c.course, t.bookIsbn, t.book_title
+-- FROM Course AS c
+-- JOIN BookAdoption AS ba ON c.course = ba.course
+-- JOIN TextBook AS t ON ba.bookIsbn = t.bookIsbn
+-- JOIN (
+--     SELECT b.course
+--     FROM BookAdoption AS b
+--     GROUP BY b.course
+--     HAVING COUNT(*) > 2
+-- ) AS many ON many.course = c.course
+-- WHERE c.dept = 'CS'
+-- ORDER BY t.book_title;
 
 -- Departments where all adopted books are from a specific publisher (PEARSON)
 -- SELECT DISTINCT c.dept
@@ -124,6 +124,8 @@ ORDER BY t.book_title;
 --     JOIN TextBook t2 ON t2.bookIsbn = b2.bookIsbn
 --     WHERE t2.publisher <> 'Pearson'
 -- );
+
+
 -- Simplified with GROUP BY/HAVING: zero non-Pearson adoptions
 SELECT c.dept
 FROM Course AS c
@@ -131,6 +133,7 @@ JOIN BookAdoption AS b ON c.course = b.course
 JOIN TextBook AS t ON t.bookIsbn = b.bookIsbn
 GROUP BY c.dept
 HAVING COUNT(*) > 0 AND SUM(t.publisher <> 'Pearson') = 0;
+
 
 -- Students with maximum marks in DBMS
 SELECT s.name
@@ -151,6 +154,7 @@ AND e.marks = (
 -- FROM Course c
 -- JOIN Enroll e ON c.course = e.course
 -- WHERE e.regno = '01HF235';
+
 CREATE OR REPLACE VIEW CoursesOptedByStudent AS
 SELECT c.cname, e.marks
 FROM Course AS c
