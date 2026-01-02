@@ -109,27 +109,27 @@ JOIN Department d ON e.d_no = d.d_no
 WHERE d.dname = "Accounts";
 
 -- Employees who work on all projects of department 1
--- SELECT e.ssn, e.name, e.d_no
--- FROM Employee e
--- WHERE NOT EXISTS (
---     SELECT p.p_no
---     FROM Project p
---     WHERE p.d_no = 1
---       AND p.p_no NOT IN (
---           SELECT w.p_no
---           FROM WorksOn w
---           WHERE w.ssn = e.ssn
---       )
--- );
--- Simplified using GROUP BY/HAVING to perform division
 SELECT e.ssn, e.name, e.d_no
-FROM Employee AS e
-JOIN WorksOn AS w ON w.ssn = e.ssn
-JOIN Project AS p ON p.p_no = w.p_no AND p.d_no = 1
-GROUP BY e.ssn, e.name, e.d_no
-HAVING COUNT(DISTINCT p.p_no) = (
-    SELECT COUNT(*) FROM Project p2 WHERE p2.d_no = 1
+FROM Employee e
+WHERE NOT EXISTS (
+    SELECT p.p_no
+    FROM Project p
+    WHERE p.d_no = 1
+      AND p.p_no NOT IN (
+          SELECT w.p_no
+          FROM WorksOn w
+          WHERE w.ssn = e.ssn
+      )
 );
+-- Simplified using GROUP BY/HAVING to perform division
+-- SELECT e.ssn, e.name, e.d_no
+-- FROM Employee AS e
+-- JOIN WorksOn AS w ON w.ssn = e.ssn
+-- JOIN Project AS p ON p.p_no = w.p_no AND p.d_no = 1
+-- GROUP BY e.ssn, e.name, e.d_no
+-- HAVING COUNT(DISTINCT p.p_no) = (
+--     SELECT COUNT(*) FROM Project p2 WHERE p2.d_no = 1
+-- );
 
 -- Departments with more than one employee earning above 6,00,000
 SELECT d.d_no, COUNT(*) AS emp_count
