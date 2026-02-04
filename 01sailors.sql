@@ -85,15 +85,17 @@ WHERE s.rating >= 8
 -- )
 -- AND s.sname LIKE "%storm%"
 -- ORDER BY s.sname ASC;
--- SELECT s.sname
--- FROM Sailors s
--- WHERE s.sname LIKE '%storm%'
---   AND NOT EXISTS (
---       SELECT 1
---       FROM reserves r
---       WHERE r.sid = s.sid
---   )
--- ORDER BY s.sname ASC;
+
+-- Here Not exits
+SELECT s.sname
+FROM Sailors s
+WHERE s.sname LIKE '%storm%'
+  AND NOT EXISTS (
+      SELECT *
+      FROM reserves r
+      WHERE r.sid = s.sid
+  )
+ORDER BY s.sname ASC;
 
 
 -- Find the name of the sailors who have reserved all boats
@@ -142,13 +144,14 @@ LIMIT 1;
 --   AND s.age >= 40
 -- GROUP BY b.bid
 -- HAVING COUNT(DISTINCT r.sid) >= 2;
--- SELECT r.bid, AVG(s.age) AS average_age
--- FROM reserves r
--- JOIN Sailors s ON r.sid = s.sid
--- WHERE s.age >= 40
--- GROUP BY r.bid
--- HAVING COUNT(DISTINCT r.sid) >= 2;
 
+SELECT r.bid, AVG(s.age) AS average_age
+FROM reserves r
+JOIN Sailors s ON r.sid = s.sid
+WHERE s.age >= 40
+GROUP BY r.bid
+HAVING COUNT(DISTINCT r.sid) >= 2;
+ 
 -- Create a view showing names and colours of boats reserved by sailors with rating = 5
 -- CREATE VIEW ReservedBoatsWithRatedSailor AS
 -- SELECT DISTINCT b.bname, b.color
@@ -179,23 +182,21 @@ WHERE s.rating = 5;
 -- //
 -- DELIMITER ;
 
--- DELIMITER //
+DELIMITER //
 
--- CREATE OR REPLACE TRIGGER CheckAndDelete
--- BEFORE DELETE ON Boat
--- FOR EACH ROW
--- BEGIN
---     IF EXISTS (
---         SELECT 1 FROM reserves WHERE bid = OLD.bid
---     ) THEN
---         SIGNAL SQLSTATE '45000'
---         SET MESSAGE_TEXT = 'Boat is reserved and cannot be deleted';
---     END IF;
--- END;
--- //
-
--- DELIMITER ;
+CREATE OR REPLACE TRIGGER CheckAndDelete
+BEFORE DELETE ON Boat
+FOR EACH ROW
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM reserves WHERE bid = OLD.bid
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Boat is reserved and cannot be deleted';
+    END IF;
+END;
+//DELIMITER ;
 
 
 -- -- Example delete (will fail if boat is reserved)
--- DELETE FROM Boat WHERE bid = 103;
+DELETE FROM Boat WHERE bid = 103;
