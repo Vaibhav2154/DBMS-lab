@@ -131,7 +131,7 @@ FROM car AS c
 JOIN owns AS o ON o.reg_no = c.reg_no
 JOIN person AS p ON p.driver_id = o.driver_id
 WHERE p.driver_name = 'Smith'
-    AND c.model = 'Mazda';
+    AND c.model da= 'Maz';
 
 -- Update damage amount
 UPDATE participated

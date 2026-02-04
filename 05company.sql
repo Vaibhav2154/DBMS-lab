@@ -13,6 +13,13 @@ CREATE TABLE IF NOT EXISTS Employee (
     FOREIGN KEY (super_ssn) REFERENCES Employee(ssn) ON DELETE SET NULL
 );
 
+INSERT INTO Employee VALUES
+("01NB235", "Chandan_Krishna", "Siddartha Nagar, Mysuru", "Male", 1500000, "01NB235", 5),
+("01NB354", "Employee_2", "Lakshmipuram, Mysuru", "Female", 1200000, "01NB235", 2),
+("02NB254", "Employee_3", "Pune, Maharashtra", "Male", 1000000, "01NB235", 4),
+("03NB653", "Employee_4", "Hyderabad, Telangana", "Male", 2500000, "01NB354", 5),
+("04NB234", "Employee_5", "JP Nagar, Bengaluru", "Female", 1700000, "01NB354", 1);
+
 CREATE TABLE IF NOT EXISTS Department (
     d_no INT PRIMARY KEY,
     dname VARCHAR(100) NOT NULL,
@@ -43,12 +50,6 @@ CREATE TABLE IF NOT EXISTS WorksOn (
     FOREIGN KEY (p_no) REFERENCES Project(p_no) ON DELETE CASCADE
 );
 
-INSERT INTO Employee VALUES
-("01NB235", "Chandan_Krishna", "Siddartha Nagar, Mysuru", "Male", 1500000, "01NB235", 5),
-("01NB354", "Employee_2", "Lakshmipuram, Mysuru", "Female", 1200000, "01NB235", 2),
-("02NB254", "Employee_3", "Pune, Maharashtra", "Male", 1000000, "01NB235", 4),
-("03NB653", "Employee_4", "Hyderabad, Telangana", "Male", 2500000, "01NB354", 5),
-("04NB234", "Employee_5", "JP Nagar, Bengaluru", "Female", 1700000, "01NB354", 1);
 
 INSERT INTO Department VALUES
 (1, "Human Resources", "01NB235", "2020-10-21"),
@@ -98,6 +99,8 @@ JOIN Employee AS e ON w.ssn = e.ssn
 JOIN Project AS p ON p.p_no = w.p_no
 WHERE p.p_name = 'IOT';
 
+
+
 -- Salary statistics for Accounts department
 SELECT
     SUM(e.salary) AS sal_sum,
@@ -107,6 +110,8 @@ SELECT
 FROM Employee e
 JOIN Department d ON e.d_no = d.d_no
 WHERE d.dname = "Accounts";
+
+
 
 -- Employees who work on all projects of department 1
 SELECT e.ssn, e.name, e.d_no
